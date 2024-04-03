@@ -4,7 +4,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const app = express()
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.use(cors())
 app.use(express.json())
@@ -12,6 +12,8 @@ app.use(express.json())
 // username :dbjohnn1
 // password:tx6kerv7KsEGK6Nz
 
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 
 
 const uri =process.env. MONGODB_URL;
@@ -50,6 +52,7 @@ async function run() {
    const  appointmentcollection = client.db('doctors_portal') .collection('appointmentService')
    const  ordercollection = client.db('doctors_portal') .collection('appointmentOrder')
    const  usercollection = client.db('doctors_portal') .collection('user')
+   const  doctorcollection = client.db('doctors_portal') .collection('doctors')
   
 //    ////data mongo thaka naouea \\\\\\\\\\
    app.get('/appointment',async(req,res) =>{
@@ -147,10 +150,10 @@ async function run() {
       const requesteraccount = await usercollection.findOne({email:requester})
      
       // if(requesteraccount.role == 'admin'){
-        console.log(requesteraccount)
+        // console.log(requesteraccount)
         
         const filter = {email: email};
-        console.log(filter)
+        // console.log(filter)
         const updateDoc = {
           $set: {role:'admin'},
         };
@@ -197,6 +200,42 @@ async function run() {
         return res.send({success: true,result})
 
     })
+
+
+    // ////////////////////doctorcollection\\\\\\\\\\\\\\\\\
+    app.post('/doctor',async(req,res) => {
+      const doctor=req.body;
+      const result = await doctorcollection.insertOne(doctor);
+      res.send(result)
+    })
+
+    app.get('/doctors',async(req,res) => {
+      const doctors = await doctorcollection.find().toArray()
+      res.send(doctors)
+    })
+
+
+    app.delete('/doctors/:email',async(req,res) => {
+      const email = req.params.email;
+      const query = {email:email};
+      const result = await doctorcollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+    app.get('/payment/:id',async(req,res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const booking = await ordercollection.findOne(query)
+      res.send(booking)
+    })
+
+
+
+
+
+
+
   }
 
    
